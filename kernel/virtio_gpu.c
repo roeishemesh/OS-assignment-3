@@ -548,6 +548,13 @@ void virtio_gpu_commit(void)
     gpu_transfer_flush();
 }
 
+// Return the physical address of framebuffer page i.
+// Used by sys_map_display to install PTEs in the user's page table.
+uint64 virtio_gpu_fb_pa(int i)
+{
+    return (uint64)fb[i];
+}
+
 // ── GPU daemon ────────────────────────────────────────────────────────
 // Kernel process started by kproc_create().  Wakes every DISPLAY_DAEMON_TICKS
 // timer ticks and issues TRANSFER_TO_HOST_2D + RESOURCE_FLUSH so that

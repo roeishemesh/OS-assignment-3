@@ -11,3 +11,4 @@
 #define NBUF         (MAXOPBLOCKS*3)  // size of disk block cache
 #define FSSIZE       2000  // size of file system in blocks
 #define MAXPATH      128   // maximum file path name
+#define GPU_FB_PAGES 300   // number of physical pages in the GPU framebuffer (640x480x4 bytes)
