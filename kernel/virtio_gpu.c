@@ -555,6 +555,26 @@ uint64 virtio_gpu_fb_pa(int i)
     return (uint64)fb[i];
 }
 
+// Re-point the GPU device backing list to the physical pages of a user buffer.
+// pagetable is the calling process's page table; va is the page-aligned
+// virtual address of a GPU_FB_PAGES-sized user buffer.
+// Walks the page table to collect physical addresses, then detaches the
+// current backing and attaches the user pages instead.
+void virtio_gpu_flip(pagetable_t pagetable, uint64 va)
+{
+    static struct virtio_gpu_mem_entry entries[GPU_FB_PAGES];
+
+    for (int i = 0; i < GPU_FB_PAGES; i++) {
+        uint64 pa = walkaddr(pagetable, va + (uint64)i * PGSIZE);
+        entries[i].addr   = pa;
+        entries[i].length = PGSIZE;
+        entries[i].padding = 0;
+    }
+
+    gpu_cmd_detach();
+    gpu_cmd_attach(entries, GPU_FB_PAGES);
+}
+
 // ── GPU daemon ────────────────────────────────────────────────────────
 // Kernel process started by kproc_create().  Wakes every DISPLAY_DAEMON_TICKS
 // timer ticks and issues TRANSFER_TO_HOST_2D + RESOURCE_FLUSH so that

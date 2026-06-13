@@ -202,5 +202,8 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    // Sleep long enough for the display daemon to flush at least once
+    // before we exit and free the buffer pages.
+    sleep(50);
     exit(0);
 }
