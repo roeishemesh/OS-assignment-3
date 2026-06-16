@@ -104,11 +104,9 @@ sys_flip_display(void)
 
   argaddr(0, &buf);
 
-  // buf must be page-aligned
   if(buf % PGSIZE != 0)
     return -1;
 
-  // all GPU_FB_PAGES pages must be mapped with user permission
   for(int i = 0; i < GPU_FB_PAGES; i++){
     if(walkaddr(p->pagetable, buf + (uint64)i * PGSIZE) == 0)
       return -1;
@@ -119,13 +117,7 @@ sys_flip_display(void)
   return 0;
 }
 
-// sys_map_display: map the GPU's kernel framebuffer pages (fb[]) directly
-// into the calling process's address space with PTE_U|PTE_R|PTE_W.
-//
-// Syscall argument 0: desired user virtual address (must be page-aligned).
-//   Pass 0 to let the kernel auto-select the next available VA above p->sz.
-//
-// Returns the mapped virtual address on success, (uint64)-1 on failure.
+
 uint64
 sys_map_display(void)
 {
@@ -134,20 +126,16 @@ sys_map_display(void)
 
   argaddr(0, &addr);
 
-  // if already mapped, return existing VA (addr==0) or fail (addr!=0)
   if(p->fb_va != 0)
     return (addr == 0) ? p->fb_va : -1;
 
   uint64 va;
   if(addr == 0){
-    // auto-select: first page-aligned VA above p->sz
     va = PGROUNDUP(p->sz);
   } else {
-    // user-supplied: must be page-aligned
     if(addr % PGSIZE != 0)
       return -1;
-    // check that none of the GPU_FB_PAGES pages in [addr, addr+GPU_FB_PAGES*PGSIZE)
-    // are already mapped
+
     for(int i = 0; i < GPU_FB_PAGES; i++){
       if(walk(p->pagetable, addr + (uint64)i * PGSIZE, 0) != 0)
         return -1;
@@ -155,11 +143,11 @@ sys_map_display(void)
     va = addr;
   }
 
-  // install one PTE per framebuffer page with user read/write permission
+
   for(int i = 0; i < GPU_FB_PAGES; i++){
     if(mappages(p->pagetable, va + (uint64)i * PGSIZE, PGSIZE,
                 virtio_gpu_fb_pa(i), PTE_U | PTE_R | PTE_W) != 0){
-      // mapping failed part-way through — unmap what we already installed
+    
       uvmunmap(p->pagetable, va, i, 0);
       return -1;
     }
