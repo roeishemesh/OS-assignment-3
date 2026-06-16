@@ -115,6 +115,7 @@ sys_flip_display(void)
   }
 
   virtio_gpu_flip(p->pagetable, buf);
+  p->fb_flipped = 1;
   return 0;
 }
 

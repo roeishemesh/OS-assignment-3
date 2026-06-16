@@ -158,6 +158,8 @@ freeproc(struct proc *p)
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
+  if(p->fb_flipped)
+    virtio_gpu_restore();
   if(p->pagetable) {
     if(p->fb_va != 0)
       uvmunmap(p->pagetable, p->fb_va, GPU_FB_PAGES, 0);
@@ -166,6 +168,7 @@ freeproc(struct proc *p)
   p->pagetable = 0;
   p->sz = 0;
   p->fb_va = 0;
+  p->fb_flipped = 0;
   p->pid = 0;
   p->parent = 0;
   p->name[0] = 0;

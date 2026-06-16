@@ -105,4 +105,5 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   uint64 fb_va;                // VA of framebuffer mapping, 0 if not mapped
+  int fb_flipped;              // 1 if this process called flip_display, 0 otherwise
 };

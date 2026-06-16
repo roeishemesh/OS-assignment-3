@@ -555,11 +555,25 @@ uint64 virtio_gpu_fb_pa(int i)
     return (uint64)fb[i];
 }
 
+
+// Restore the GPU device backing list to the kernel's own fb[] pages.
+// Called when a process that called flip_display exits, so the device is
+// never left pointing at freed user pages.
+void virtio_gpu_restore(void)
+{
+    static struct virtio_gpu_mem_entry entries[GPU_FB_PAGES];
+    for (int i = 0; i < GPU_FB_PAGES; i++) {
+        entries[i].addr    = (uint64)fb[i];
+        entries[i].length  = PGSIZE;
+        entries[i].padding = 0;
+    }
+    gpu_cmd_detach();
+    gpu_cmd_attach(entries, GPU_FB_PAGES);
+}
+
 // Re-point the GPU device backing list to the physical pages of a user buffer.
 // pagetable is the calling process's page table; va is the page-aligned
 // virtual address of a GPU_FB_PAGES-sized user buffer.
-// Walks the page table to collect physical addresses, then detaches the
-// current backing and attaches the user pages instead.
 void virtio_gpu_flip(pagetable_t pagetable, uint64 va)
 {
     static struct virtio_gpu_mem_entry entries[GPU_FB_PAGES];
